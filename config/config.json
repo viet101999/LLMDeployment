@@ -1,0 +1,17 @@
+{
+    "server"      : {
+        "host": "0.0.0.0",
+        "port": "8080"
+    },
+    "logging"     : {
+        "folder": "logs",
+        "name"  : "app.log"
+    },
+    "model_config": {
+        "device": "cuda",
+        "llm": {
+            "model_name"  : "bigscience/bloomz-1b1"
+        }
+
+    }
+}

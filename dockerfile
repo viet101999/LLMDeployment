@@ -32,14 +32,16 @@ RUN pip install --no-cache-dir -U transformers
 RUN pip install --no-cache-dir evaluate
 RUN pip install --no-cache-dir prometheus-client
 RUN pip install --no-cache-dir accelerate
-RUN pip install --no-cache-dir -U bitsandbytes
-
+RUN pip install --no-cache-dir dependency-injector
+RUN pip install --no-cache-dir bitsandbytes
 
 # Copy application code
 COPY . .
 
 # Expose port for FastAPI
-EXPOSE 8000
+# EXPOSE 8080
+# EXPOSE 8001
 
 # Run the application
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python3", "app.py"]
+# ENTRYPOINT ["gunicorn", "app:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8080", "--preload", "--timeout", "600"]

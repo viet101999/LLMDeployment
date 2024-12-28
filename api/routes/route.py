@@ -1,43 +1,50 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
+import logging
 
-# Define the router
-router = APIRouter()
+from dependency_injector.wiring import Provide, inject
+from fastapi import APIRouter, Depends, HTTPException
 
-# Load model and tokenizer
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_name = "bigscience/bloomz-1b1"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+from containers.app_container import AppContainer
+from controller.llm_controller import LLMController
+from data_model.api.response import (
+    LLMInput,
+    LLMOutput
+    )
 
-quantized_model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    # load_in_8bit=True,
-    device_map="auto",
+router = APIRouter(
+    prefix="/LLM",
+    tags=["LLM"],
+    responses={404: {"description": "Not found"}, 500: {"description": "server error"}}
 )
-quantized_model.eval()
+logger = logging.getLogger("route")
 
-class CompletionRequest(BaseModel):
-    prompt: str
-    max_tokens: int = 50
-    temperature: float = 0.7
+@router.post(
+    path="/generate_text",
+    tags=["LLM"]
+)
+@inject
+async def generate_text(
+    data: LLMInput,
+    llm_controller: LLMController = Depends(Provide[AppContainer.llm_controller]),
+):
+    """
+    Generate text
+    :param data: data input
+    :param llm_controller: LLM controller
+    :return:
+    """
 
-class CompletionResponse(BaseModel):
-    completion: str
-    logprobs: list = None
+    prompt = data.prompt
+    max_length = data.max_length
 
-@router.post("/generate", response_model=CompletionResponse)
-async def generate(request: CompletionRequest):
-    try:
-        inputs = tokenizer(request.prompt, return_tensors="pt").to(device)
-        outputs = quantized_model.generate(
-            inputs["input_ids"],
-            max_length=request.max_tokens + len(inputs["input_ids"][0]),
-            temperature=request.temperature,
-            pad_token_id=tokenizer.eos_token_id,
+    output: LLMOutput = llm_controller.generate_text(
+        prompt=prompt, 
+        max_length=max_length
+    )
+    
+    if not output.error:
+        return output
+    else:
+        raise HTTPException(
+            status_code=500,
+            detail=output.error
         )
-        output_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return CompletionResponse(completion=output_text, logprobs=None)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
