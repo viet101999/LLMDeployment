@@ -1,7 +1,10 @@
 fastapi
 uvicorn
-transformers
+psutil
 torch
+transformers
+evaluate
 accelerate
-deepspeed
+# deepspeed
 bitsandbytes
+prometheus-client
