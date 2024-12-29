@@ -7,7 +7,9 @@ from containers.app_container import AppContainer
 from controller.llm_controller import LLMController
 from data_model.api.response import (
     LLMInput,
-    LLMOutput
+    LLMOutput,
+    MeasureSpeedInput,
+    MeasureSpeedOutput
     )
 
 router = APIRouter(
@@ -39,6 +41,38 @@ async def generate_text(
     output: LLMOutput = llm_controller.generate_text(
         prompt=prompt, 
         max_length=max_length
+    )
+    
+    if not output.error:
+        return output
+    else:
+        raise HTTPException(
+            status_code=500,
+            detail=output.error
+        )
+    
+@router.post(
+    path="/measure_speed",
+    tags=["LLM"]
+)
+@inject
+async def measure_speed(
+    data: MeasureSpeedInput,
+    llm_controller: LLMController = Depends(Provide[AppContainer.llm_controller]),
+):
+    """
+    Generate text
+    :param data: data input
+    :param llm_controller: LLM controller
+    :return:
+    """
+
+    prompt = data.prompt
+    num_iterations = data.num_iterations
+
+    output: MeasureSpeedOutput = llm_controller.measure_speed(
+        prompt=prompt, 
+        num_iterations=num_iterations
     )
     
     if not output.error:

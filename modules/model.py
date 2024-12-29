@@ -15,7 +15,10 @@ from starlette.responses import Response
 import threading
 
 from common.common_keys import *
-from data_model.model import llm
+from data_model.model.llm import (
+    TextOutput,
+    SpeedOutput
+)
 from modules.base import BaseModule
 
 
@@ -55,43 +58,13 @@ class ModelLoad(BaseModule):
             outputs = self.llm_model.generate(
                 **inputs,
                 max_length=max_length,
-                # temperature=0.01,  # Sampling temperature
-                # top_p=1.0,  # Top-p (nucleus) sampling
-                # top_k=1,  # Top-k sampling
-                # repetition_penalty=1.0,
-                # length_penalty=1.0,
-                # use_beam_search=False,
-                # min_tokens=0,
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
-                # do_sample=True,
-                # top_k=50, 
-                # top_p=0.9,
             )
-
-        # Decode and calculate log probabilities
 
         output = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
 
-        # input_token_logprobs = logprobs_from_prompt(request.prompt, tokenizer, model)
-        # output_token_logprobs = logprobs_from_prompt(output_text, tokenizer, model)
-
-        # input_ids = inputs["input_ids"]
-        # output = model(input_ids=input_ids)
-
-        # # neglecting the first token, since we make no prediction about it
-        # shift_labels = input_ids[..., 1:].contiguous()
-        # shift_logits = output.logits[..., :-1, :].contiguous()
-
-        # for label_id,logit in zip(shift_labels[0].tolist(), shift_logits[0]):
-        #     logprob = F.log_softmax(logit, dim=0).tolist()[label_id]
-        #     print(tokenizer.decode(label_id)," : ", logprob)
-        # output = {
-        #     "generated_text": output_text, 
-        #     # "input_token_logprobs": input_token_logprobs, 
-        #     # "output_token_logprobs": output_token_logprobs
-        # }
-        return output
+        return TextOutput(text=output)
         
     def measure_speed(self, prompt, num_iterations=10):
         """Measures inference speed in tokens per second."""
@@ -109,4 +82,7 @@ class ModelLoad(BaseModule):
 
         avg_time_per_iteration = total_time / num_iterations
         tokens_per_second = total_tokens / total_time
-        return tokens_per_second, avg_time_per_iteration
+        return SpeedOutput(
+            tokens_per_second=tokens_per_second, 
+            avg_time_per_iteration=avg_time_per_iteration
+        )

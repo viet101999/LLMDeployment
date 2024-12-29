@@ -15,3 +15,24 @@ class LLMOutput(BaseModel):
         default=None,  # Set default to None
         description="Error information if an exception occurs"
     )
+
+class MeasureSpeedInput(BaseModel):
+    prompt: str = Field("Write a short story about a robot learning to love.")
+    num_iterations: int = Field(
+        default=10,
+        description="number of iterations"
+    )
+
+class MeasureSpeedOutput(BaseModel):
+    tokens_per_second: float = Field(
+        default=0.0,
+        description="tokens per second"
+    )
+    avg_time_per_iteration: float = Field(
+        default=0.0,
+        description="avg time per iteration (seconds)"
+    )
+    error: Optional[Any] = Field(
+        default=None,  # Set default to None
+        description="Error information if an exception occurs"
+    )

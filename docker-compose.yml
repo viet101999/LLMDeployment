@@ -16,7 +16,8 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: ["gpu"]  # Use GPU
+            - driver: "nvidia"
+              capabilities: ["gpu"]
 
   prometheus:
     image: prom/prometheus:latest
